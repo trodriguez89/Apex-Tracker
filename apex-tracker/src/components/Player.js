@@ -1,80 +1,84 @@
 import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import axios from "axios";
 
+import Nav from "./Nav";
+
 const Player = (props) => {
-    const [player, setPlayer] = useState({
-        platform: props.location.state.platform,
-        username: props.location.state.username
-    })
     const [allInfo, setAllInfo] = useState([]);
     const [lifetime, setLifetime] = useState({});
+    const [legendName, setLegendName] = useState({})
+    const [legendStats, setLegendStats] = useState({})
+    const [secondLeg, setSecondLeg] = useState({});
+    const [secondLegStats, setSecondLegStats] = useState({});
 
-    const handleChanges = e => {
-        setPlayer({
-            ...player,
-            [e.target.name]: e.target.value
+    useEffect(() => {
+        axios.get(`https://cors-anywhere.herokuapp.com/https://public-api.tracker.gg/v2/apex/standard/profile/${props.location.state.platform}/${props.location.state.username}`, {
+            headers: {
+                "TRN-Api-Key": "57f6df6c-eeca-4023-a6c0-37d49b82dade",
+                "Accept": "application/json",
+                // "Accept-Encoding": "gzip" 
+            }
         })
-    };
-
-    const onSubmit = e => {
-        e.preventDefault();
-    };
-    
-    const pageInfo = useEffect(() => {
-            axios.get(`https://cors-anywhere.herokuapp.com/https://public-api.tracker.gg/v2/apex/standard/profile/${player.platform}/${player.username}`, {
-                headers: {
-                    "TRN-Api-Key": "57f6df6c-eeca-4023-a6c0-37d49b82dade",
-                    "Accept": "application/json",
-                    // "Accept-Encoding": "gzip" 
-                }
+            .then(res => {
+                console.log("console log", res.data)
+                setAllInfo(res.data.data.platformInfo)
+                setLifetime(res.data.data.segments[0].stats.seasonWins)
+                setLegendName(res.data.data.segments[1].metadata)
+                setLegendStats(res.data.data.segments[1].stats.kills)
+                setSecondLeg(res.data.data.segments[2].metadata)
+                setSecondLegStats(res.data.data.segments[2].stats.seasonKills)
             })
-                .then(res => {
-                    console.log("console log", res.data)
-                    setAllInfo(res.data.data.platformInfo)
-                    setLifetime(res.data.data.segments[0].stats.seasonWins)
-                })
-                .catch(error => {
-                    console.log("Something went wrong!", error)
-                })
-        }, [player.platform, player.username])
+            .catch(error => {
+                console.log("Something went wrong!", error)
+            })
+    }, [props.location.state.platform, props.location.state.username])
 
 
+
+    // console.log("legendStats", legendStats)
 
     // API KEY - 57f6df6c-eeca-4023-a6c0-37d49b82dade
 
     return (
-        <div>
-            <div>
-                <form onSubmit={onSubmit}>
-                    <label>Select a Platform</label>
-                    <select name="platform" id="platform" onChange={handleChanges}>
-                        <option value="">Platform</option>
-                        <option value="psn">PS4</option>
-                        <option value="xbl">Xbox One</option>
-                        <option value="origin">PC</option>
-                    </select>
-                    <label>Player Username</label>
-                    <input
-                        type="text"
-                        placeholder="Player Name"
-                        name="username"
-                        onChange={handleChanges}
-                    />
-                    <button type="submit">Search for Player Stats</button>
-                </form>
-            </div>
-            <div>
-                <h3>Player - {allInfo.platformUserHandle}</h3>
-                <h3>Platform - {allInfo.platformSlug}</h3>
-                <img src={allInfo.avatarUrl} />
-            </div>
-            <div>
-                <h3>Stats</h3>
-                <h4>Wins - {lifetime.value}</h4>
-                <h4>Percentile - {lifetime.percentile}%</h4>
-                <h4>Rank - {lifetime.rank}</h4>
-            </div>
-        </div>
+        <div className="main-contain">
+            <Nav />
+                <div className="bg-color">
+                    <div className="player-info">
+                        {/* <h3>Platform - {allInfo.platformSlug}</h3> */}
+                        <img alt="player avatar" className="player-img" src={allInfo.avatarUrl} />
+                        <h3 className="player-name">{allInfo.platformUserHandle}</h3>
+                    </div>
+                    <div className="stats-contain">
+                        <h4>Wins - {lifetime.value}</h4>
+                        <h4>Percentile - {lifetime.percentile}%</h4>
+                        <h4>Rank - {lifetime.rank}</h4>
+                    </div>
+                    <div className="legend-stats">
+                        <div className="legend-cards2">
+                            <h4 className="title">{legendName.name}</h4>
+                            <img className="legend-pic" alt="pic of selected legend" src={legendName.imageUrl} />
+                            <div className="inside-div-legend2">
+                                <h4>Kills - {legendStats.displayValue}</h4>
+                                <h4>Percentile - {legendStats.percentile}</h4>
+                            </div>
+                        </div>
+                        <div className="legend-cards2">
+                            <h4 className="title">{secondLeg.name}</h4>
+                            <img className="legend-pic" alt="pic of selected legend" src={secondLeg.imageUrl} />
+                            <div className="inside-div-legend2">
+                                <h4>Kills - {secondLegStats.displayValue}</h4>
+                                <h4>Percentile - {secondLegStats.percentile}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="button-contain">
+                        <Link to="/">
+                            <button className="player-button">Search for another Player</button>
+                        </Link>
+                    </div>
+                </div>
+        </div >
     )
 };
 
